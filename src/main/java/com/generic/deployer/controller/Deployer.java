@@ -139,6 +139,8 @@ public class Deployer
         BufferedWriter newUpload = new BufferedWriter(new FileWriter(script));
         newUpload.write("nohup java -jar " + remotePath + program + " > " + "/tmp" + "/" + program + ".log 2>&1 &");
         newUpload.write("\n");
+        newUpload.write("rm " + scriptName);
+        newUpload.write("\n");
         newUpload.close();
         logger.info ("startup script file " + script + " created");
         changeMode ("777", script);
@@ -150,6 +152,8 @@ public class Deployer
         String script = localPath + scriptName;
         BufferedWriter newUpload = new BufferedWriter(new FileWriter(script));
         newUpload.write("ps -ef | grep " + "'." + program + ".' | grep java | awk '{print $2}' | xargs kill -9 ");
+        newUpload.write("\n");
+        newUpload.write("rm " + scriptName);
         newUpload.write("\n");
         newUpload.close();
         logger.info ("Stop script file " + script + " created");
@@ -279,6 +283,7 @@ public class Deployer
         {
             createStartUpScript (uploadFolder,program,remotePath);
             upLoad(uploadFolder,program ,machines,usr,passwd,remotePath,1);
+            removeTemporaryFile(uploadFolder,getUpLoadFileName(program,os.contains("WINDOWS")?".bat":".sh"));
             startRemoteProcess(remotePath + getStartUpFileName(program,".sh"), machines,
                     usr, identityFile);
         }
@@ -310,6 +315,7 @@ public class Deployer
         {
             createStopScript (uploadFolder,program,remotePath);
             upLoad(uploadFolder,program ,machines,usr,passwd,remotePath,2);
+            removeTemporaryFile(uploadFolder,getUpLoadFileName(program,os.contains("WINDOWS")?".bat":".sh"));
             startRemoteProcess(remotePath + getStopFileName(program,".sh"), machines,
                     usr, identityFile);
         }
