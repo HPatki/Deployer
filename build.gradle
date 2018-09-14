@@ -1,0 +1,84 @@
+import com.github.jengelman.gradle.plugins.processes.tasks.*
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral ()
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.1.RELEASE")
+    }
+}
+
+plugins {
+    id 'io.franzbecker.gradle-lombok' version '1.8'
+    id 'java'
+}
+
+lombok { // optional: values below are the defaults
+    version = "1.18.0"
+    //sha256 = "3ca225ce3917eac8bf4b7d2186845df4e70dcdede356dca8537b6d78a535c91e"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+group = "com.generic.deployer"
+
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+apply plugin: 'spring-boot'
+apply plugin: 'idea'
+
+def generatedSources = "$buildDir/generated-src"
+def generatedOutputDir = file("$generatedSources")
+
+dependencies 
+{
+	annotationProcessor 'org.projectlombok:lombok:1.18.0'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.0'
+	compile group: 'javax.ws.rs', name: 'jsr311-api', version: '1.1.1'
+	compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+	compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '1.4.1.RELEASE'
+	compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-config', version: '1.2.2.RELEASE'
+	compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-parent', version: 'Brixton.SR7'
+	compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '1.2.2.RELEASE'
+	compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.7.0'
+	compile group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.7.0'
+	compile group: 'joda-time', name: 'joda-time', version: '2.3'
+	compile group: 'org.springframework', name: 'spring-core', version: '4.3.3.RELEASE'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.3.4'
+    compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.3.1'
+	compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.1'
+}
+
+repositories
+    {
+        jcenter()
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+compileJava {
+    dependsOn([clean])
+    doFirst {
+        generatedOutputDir.exists() || generatedOutputDir.mkdirs()
+    }
+}
+
+sourceSets {
+    test {
+        java {
+            srcDirs += generatedOutputDir
+        }
+    }
+}
+
+bootRun 
+{
+    systemProperty "spring.cloud.config.enabled", "false"
+    systemProperty "spring.config.location", "file:src/test/resources/application-local.properties"
+}

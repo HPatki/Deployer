@@ -1,0 +1,25 @@
+server:
+ port : 18990
+trace: false
+# Max file size.
+spring:
+  http:
+    multipart:
+      max-file-size : 50Mb
+#Max request size.
+      max-request-size : 50Mb
+logging:
+  level:
+    org.springframework.web: ERROR
+    com.geoown.server.persistence: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file: ./log/application.log
+deployment:
+  directory : /tmp/
+  #sftpexe: " \"C:\\Program Files (x86)\\PuTTY\\psftp.exe \" "
+  sftpexe: sftp
+  identityfile: ""
+  user: shwetapatki
+  passwd: c3b2a1
