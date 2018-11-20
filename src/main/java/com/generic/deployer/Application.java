@@ -42,7 +42,7 @@ public class Application
     public static void main(String[] args)
     {
         String os = System.getProperty("os.name");
-        Deployer.uploadFolder = System.getenv("DEPLOY_DIR");
+        Deployer.stagingFolder = System.getenv("STAGING_DIR");
         Deployer.sftp = System.getenv("DEPLOY_SFTP_EXE");
         Deployer.identityFile = System.getenv("DEPLOY_IDENTITY_FILE");
         Deployer.usr = System.getenv("DEPLOY_REMOTE_USER");

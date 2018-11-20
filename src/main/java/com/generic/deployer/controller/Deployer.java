@@ -15,7 +15,7 @@ import java.io.FileWriter;
 @RequestMapping("/deploy")
 public class Deployer
 {
-    public static String uploadFolder;
+    public static String stagingFolder;
 
     public static String sftp;
 
@@ -29,22 +29,22 @@ public class Deployer
 
     private static final Logger logger = LoggerFactory.getLogger (Deployer.class);
 
-    private void removeTemporaryFile(String uploadFolder, String fileName)
+    private void removeTemporaryFile(String stagingFolder, String fileName)
     {
-        String path = uploadFolder+"/"+fileName;
+        String path = stagingFolder+fileName;
         logger.info("Preparing to delete file " + path);
         File deleteFile = new File (path);
         deleteFile.delete();
         logger.info("Deleted file " + path);
     }
 
-    private void createTemporaryFile(String uploadFolder, String fileName, MultipartFile file) throws Exception
+    private void createTemporaryFile(String stagingFolder, String fileName, MultipartFile file) throws Exception
     {
-        FileOutputStream localFile = new FileOutputStream(uploadFolder+"/"+fileName);
-        localFile.write(file.getBytes());
-        localFile.close();
-        changeMode("777", uploadFolder+fileName);
-        logger.info("file " + uploadFolder+"/"+fileName + " created");
+        FileOutputStream stagingFile = new FileOutputStream(stagingFolder+fileName);
+        stagingFile.write(file.getBytes());
+        stagingFile.close();
+        changeMode("777", stagingFolder+fileName);
+        logger.info("file " + stagingFolder+fileName + " created");
     }
 
     private String getUpLoadFileName (String file, String ext)
@@ -160,7 +160,7 @@ public class Deployer
         changeMode ("777", script);
     }
 
-    private void createUloadScript (String localPath, String file, String remotePath, Boolean isWindows,
+    private void createUloadScript (String stagingPath, String file, String remotePath, Boolean isWindows,
                                     int flow)
             throws Exception
     {
@@ -168,9 +168,9 @@ public class Deployer
         if (isWindows)
             ext = ".bat";
 
-        String script = localPath + getUpLoadFileName(file,ext);
+        String script = stagingPath + getUpLoadFileName(file,ext);
         BufferedWriter newUpload = new BufferedWriter(new FileWriter(script));
-        newUpload.write("lcd " + localPath);
+        newUpload.write("lcd " + stagingPath);
         newUpload.write("\n");
         newUpload.write("cd " + remotePath);
         newUpload.write("\n");
@@ -205,7 +205,7 @@ public class Deployer
         }
     }
 
-    private int upLoad (String localPath, String file, String machines, String user, String password,
+    private int upLoad (String stagingPath, String file, String machines, String user, String password,
                         String remotePath, int flow ) throws Exception
     {
         //now SFTP and upload to server
@@ -217,9 +217,9 @@ public class Deployer
             isWindows = true;
         }
 
-        createUloadScript(localPath,file,remotePath,isWindows,flow);
+        createUloadScript(stagingPath,file,remotePath,isWindows,flow);
 
-        int ret = startSFTP(user,password,machines,localPath + getUpLoadFileName(file,ext), identityFile);
+        int ret = startSFTP(user,password,machines,stagingPath + getUpLoadFileName(file,ext), identityFile);
 
         return ret;
     }
@@ -240,9 +240,9 @@ public class Deployer
         int ret = -1;
         try
         {
-            createTemporaryFile (uploadFolder, fileName, file);
-            upLoad(uploadFolder,fileName,machines,usr, passwd, remotePath,0);
-            removeTemporaryFile (uploadFolder,fileName);
+            createTemporaryFile (stagingFolder, fileName, file);
+            upLoad(stagingFolder,fileName,machines,usr, passwd, remotePath,0);
+            removeTemporaryFile (stagingFolder,fileName);
         }
         catch(Exception err)
         {
@@ -281,9 +281,9 @@ public class Deployer
 
         try
         {
-            createStartUpScript (uploadFolder,program,remotePath);
-            upLoad(uploadFolder,program ,machines,usr,passwd,remotePath,1);
-            removeTemporaryFile(uploadFolder,getUpLoadFileName(program,os.contains("WINDOWS")?".bat":".sh"));
+            createStartUpScript (stagingFolder,program,remotePath);
+            upLoad(stagingFolder,program ,machines,usr,passwd,remotePath,1);
+            removeTemporaryFile(stagingFolder,getUpLoadFileName(program,os.contains("WINDOWS")?".bat":".sh"));
             startRemoteProcess(remotePath + getStartUpFileName(program,".sh"), machines,
                     usr, identityFile);
         }
@@ -313,9 +313,9 @@ public class Deployer
 
         try
         {
-            createStopScript (uploadFolder,program,remotePath);
-            upLoad(uploadFolder,program ,machines,usr,passwd,remotePath,2);
-            removeTemporaryFile(uploadFolder,getUpLoadFileName(program,os.contains("WINDOWS")?".bat":".sh"));
+            createStopScript (stagingFolder,program,remotePath);
+            upLoad(stagingFolder,program ,machines,usr,passwd,remotePath,2);
+            removeTemporaryFile(stagingFolder,getUpLoadFileName(program,os.contains("WINDOWS")?".bat":".sh"));
             startRemoteProcess(remotePath + getStopFileName(program,".sh"), machines,
                     usr, identityFile);
         }
@@ -346,8 +346,8 @@ public class Deployer
 
         try
         {
-            createStartStopServiceScript (uploadFolder,service,operation);
-            upLoad(uploadFolder,service ,machines,usr,passwd,remotePath,operation);
+            createStartStopServiceScript (stagingFolder,service,operation);
+            upLoad(stagingFolder,service ,machines,usr,passwd,remotePath,operation);
             if (1 == operation)
                 startRemoteProcess(remotePath + getStartUpFileName(service,".sh"), machines,
                     usr, identityFile);
